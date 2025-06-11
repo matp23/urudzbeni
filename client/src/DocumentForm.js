@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   VStack,
   HStack,
@@ -12,7 +12,6 @@ import {
   AlertIcon,
   useToast,
   Box,
-  Spinner,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -51,7 +50,7 @@ const DocumentForm = ({ editingDocument, onDocumentSaved, onCancel }) => {
   const isEditing = !!editingDocument;
 
   // Funkcija za dohvaćanje sljedećeg broja
-  const fetchNextNumber = async (type) => {
+  const fetchNextNumber = useCallback(async (type) => {
     if (isEditing) return; // Ne generiraj novi broj za uređivanje
     
     setLoadingNumber(true);
@@ -73,10 +72,10 @@ const DocumentForm = ({ editingDocument, onDocumentSaved, onCancel }) => {
     } finally {
       setLoadingNumber(false);
     }
-  };
+  }, [isEditing, toast]);
 
   // Kompletni reset forme
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData(getInitialFormData());
     setOriginalRegistryNumber('');
     setPendingRegistryNumber('');
@@ -86,7 +85,7 @@ const DocumentForm = ({ editingDocument, onDocumentSaved, onCancel }) => {
     // Reset file input
     const fileInput = document.getElementById('pdf-upload');
     if (fileInput) fileInput.value = '';
-  };
+  }, []);
 
   // Effect za setup forme ovisno o editing/new stanju
   useEffect(() => {
@@ -110,7 +109,7 @@ const DocumentForm = ({ editingDocument, onDocumentSaved, onCancel }) => {
     }
     
     setFileError(''); // Reset file error
-  }, [editingDocument]); // Dependency on editingDocument only
+  }, [editingDocument, fetchNextNumber, resetForm]); // Added missing dependencies
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -342,7 +341,7 @@ const DocumentForm = ({ editingDocument, onDocumentSaved, onCancel }) => {
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder="Kratka bilješka o sadržaju dopisa (nije obavezno)"
+            placeholder="Kratka bilješka o sadržaju dopisa (opciono)"
             rows={4}
             bg="white"
             resize="vertical"
